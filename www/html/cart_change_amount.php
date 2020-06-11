@@ -14,8 +14,14 @@ if(is_logined() === false){
 $db = get_db_connect();
 $user = get_login_user($db);
 
+
 $cart_id = get_post('cart_id');
 $amount = get_post('amount');
+$token = get_post('token');
+
+if (is_valid_csrf_token($token)) {
+
+//トークンの処理 
 $token = get_post('token');
 
 if (is_valid_csrf_token($token)) {
