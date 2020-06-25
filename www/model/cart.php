@@ -73,7 +73,37 @@ function insert_cart($db, $user_id, $item_id, $amount = 1){
     VALUES(?, ?, ?)
   ";
 
-  return execute_query($db, $sql,[$item_id],[$user_id],[$amount]);
+  return execute_query($db, $sql,[$item_id,$user_id,$amount]);
+}
+
+// 履歴への追加
+function insert_histry($db, $user_id){
+  $sql = "
+    INSERT INTO
+        history(
+        user_id,
+        create_datetime 
+      )
+    VALUES( ? ,now())
+  ";
+
+  return execute_query($db, $sql,[$user_id]);
+}
+
+// 明細への追加
+function insert_details($db, $item_id, $order_number, $price, $amount){
+  $sql = "
+    INSERT INTO
+      details(
+        item_id,
+        order_number,
+        price,
+        amount
+      )
+    VALUES(?, ?, ?, ?)
+  ";
+
+  return execute_query($db, $sql,[$item_id, $order_number, $price, $amount]);
 }
 
 function update_cart_amount($db, $cart_id, $amount){
@@ -86,7 +116,7 @@ function update_cart_amount($db, $cart_id, $amount){
       cart_id = ?
     LIMIT 1
   ";
-  return execute_query($db, $sql,[$amount],[$cart_id]);
+  return execute_query($db, $sql,[$amount,$cart_id]);
 }
 
 function delete_cart($db, $cart_id){
@@ -105,6 +135,7 @@ function purchase_carts($db, $carts){
   if(validate_cart_purchase($carts) === false){
     return false;
   }
+  $db->beginTransaction();
   foreach($carts as $cart){
     if(update_item_stock(
         $db, 
@@ -116,6 +147,16 @@ function purchase_carts($db, $carts){
   }
   
   delete_user_carts($db, $carts[0]['user_id']);
+  insert_histry($db, $carts[0]['user_id']);
+  $order_id = $db->lastInsertId();
+  foreach($carts as $cart) {
+    insert_details($db, $cart['item_id'], $order_id, $cart['price'], $cart['amount']);
+  }
+  if(has_error()){
+    $db->rollback();
+  } else{
+    $db->commit();
+  }
 }
 
 function delete_user_carts($db, $user_id){

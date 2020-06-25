@@ -107,6 +107,6 @@ function insert_user($db, $name, $password){
     VALUES (?, ?);
   ";
 
-  return execute_query($db, $sql,[$name],[$password]);
+  return execute_query($db, $sql,[$name, $password]);
 }
 

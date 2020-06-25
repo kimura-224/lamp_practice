@@ -19,7 +19,7 @@ $cart_id = get_post('cart_id');
 $amount = get_post('amount');
 $token = get_post('token');
 
-if (is_valid_csrf_token($token)) {
+
 
 //トークンの処理 
 $token = get_post('token');
