@@ -198,3 +198,65 @@ function validate_cart_purchase($carts){
   return true;
 }
 
+
+function get_history($db, $order_number) {
+  $sql = "
+    SELECT
+     order_number,
+     create_datetime,
+     (SELECT SUM(price * amount) FROM details WHERE order_number = history.order_number ) as total
+
+    FROM
+      history
+    WHERE
+    order_number = ? ;   
+  ";
+  return fetch_query($db, $sql,[$order_number]);
+
+}
+
+
+function get_histories($db, $user_id = NULL){
+  $params = [];
+  $sql = "
+    SELECT
+     order_number,
+     create_datetime,
+     (SELECT SUM(price * amount) FROM details WHERE order_number = history.order_number ) as total
+
+    FROM
+      history 
+  ";
+  if($user_id !== NULL) {
+    $sql .= "WHERE user_id = ? ";
+    $params[] = $user_id;
+  }
+  return fetch_all_query($db, $sql,$params);
+
+}
+
+function get_details($db, $order_number, $user_id = NULL) {
+  $params = [$order_number];
+  $sql = "
+    SELECT
+     name,
+     details.price,
+     amount,
+     details.price * amount as subtotal
+
+    FROM
+      details 
+    JOIN
+      items on details.item_id = items.item_id
+    WHERE
+      order_number = ?
+  ";
+  if($user_id !== NULL) {
+    $sql .= "AND exists(select * FROM history WHERE order_number = ? AND user_id = ?)";
+    $params[] = $order_number;
+    $params[] = $user_id;
+
+  }
+  return fetch_all_query($db, $sql,$params);
+}
+
