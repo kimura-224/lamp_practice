@@ -43,6 +43,37 @@ function get_items($db, $is_open = false){
   return fetch_all_query($db, $sql);
 }
 
+function get_ranking($db, $is_open = false){
+  $sql = '
+    SELECT
+      name,
+      items.price,
+      image,
+      sum(amount) as total
+    FROM
+      items
+    JOIN
+      details
+    ON
+      items.item_id =details.item_id
+  ';
+  if($is_open === true){
+    $sql .= '
+      WHERE status = 1
+    ';
+  }
+
+  $sql.='group by items.item_id
+         order by total desc
+         limit 3' ;
+
+
+
+  return fetch_all_query($db, $sql);
+}
+
+
+
 function get_all_items($db){
   return get_items($db);
 }
